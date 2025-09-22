@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Secret Portal - One Time Access Only</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh; /* Use dynamic viewport height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            overflow-y: auto;
+            word-break: break-word; /* Prevent long words from overflowing */
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            max-width: 600px;
+            width: 90%;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .secret-content {
+            display: none;
+        }
+
+        .secret-content.show {
+            display: block;
+            animation: glitchIn 0.5s ease-out;
+        }
+
+        @keyframes glitchIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .blocked-content {
+            display: none;
+        }
+
+        .blocked-content.show {
+            display: block;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 6vw, 2.5rem); /* Adjusted for smaller screens */
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.3; /* Increased for readability */
+        }
+
+        h2 {
+            font-size: clamp(1.3rem, 5vw, 2rem); /* Adjusted for smaller screens */
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.3; /* Increased for readability */
+        }
+
+        .glitch {
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-2px); }
+            20% { transform: translateX(2px); }
+            30% { transform: translateX(-1px); }
+            40% { transform: translateX(1px); }
+        }
+
+        .secret-message {
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem); /* Adjusted for smaller screens */
+            line-height: 1.6;
+            margin: 1.5rem 0;
+            padding: clamp(1rem, 4vw, 2rem);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .blocked-message {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            line-height: 1.6;
+            margin: 1.5rem 0;
+            padding: clamp(1rem, 4vw, 2rem);
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 15px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .rainbow-text {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #fd79a8);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbow 3s ease-in-out infinite;
+        }
+
+        @keyframes rainbow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .party-mode {
+            animation: partyBounce 0.5s infinite alternate;
+        }
+
+        @keyframes partyBounce {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .secret-game {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .secret-game:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .emoji {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            margin: 1rem 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .countdown {
+            font-size: 1rem;
+            margin-top: 1rem;
+            opacity: 0.8;
+        }
+
+        .fun-fact {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+
+        .access-denied {
+            color: #ff6b6b;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: bold;
+        }
+
+        .fingerprint {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 1rem;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                /* Allow vertical scrolling on mobile */
+                align-items: flex-start;
+                padding: 1rem 0.5rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+                border-radius: 15px;
+                margin: 0;
+                width: 95%; /* Use a bit more width */
+            }
+
+            .secret-message, .blocked-message {
+                margin: 1rem 0;
+                text-align: left; /* Improve readability */
+            }
+
+            .secret-game {
+                margin: 1rem 0;
+                padding: 0.8rem;
+            }
+
+            .fun-fact {
+                padding: 0.8rem;
+                margin: 0.8rem 0;
+            }
+
+            .glitch {
+                animation: none; /* Reduce motion on mobile for better performance */
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                line-height: 1.5; /* Improve readability on small screens */
+            }
+            .container {
+                padding: 1rem;
+                border-radius: 12px;
+                /* Let height be auto, but add scroll for overflow */
+                max-height: calc(100vh - 2rem);
+                max-height: calc(100dvh - 2rem);
+                overflow-y: auto;
+            }
+
+            .secret-message, .blocked-message {
+                padding: 1rem;
+                margin: 1rem 0;
+                border-radius: 10px;
+            }
+
+            .emoji {
+                font-size: 2.5rem; /* Slightly smaller emoji */
+                margin: 0.5rem 0;
+            }
+
+            h1, h2 {
+                margin-bottom: 0.8rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                padding: 3rem;
+            }
+
+            .secret-message, .blocked-message {
+                padding: 2.5rem;
+                margin: 2.5rem 0;
+            }
+        }
+
+        /* Landscape mobile orientation */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 0.5rem;
+                align-items: center; /* Re-center for landscape */
+            }
+            
+            .container {
+                padding: 1rem;
+                max-height: calc(100vh - 1rem);
+                max-height: calc(100dvh - 1rem);
+                overflow-y: auto; /* Ensure content is scrollable */
+            }
+
+            .emoji {
+                font-size: 2rem;
+                margin: 0.5rem 0;
+            }
+
+            .secret-message, .blocked-message {
+                margin: 0.5rem 0; /* Reduce margin */
+                padding: 0.8rem; /* Reduce padding */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <div class="secret-content" id="secretContent">
+            <div class="emoji">🎉</div>
+            <h1 class="rainbow-text">Welcome, Digital Explorer!</h1>
+            <div class="secret-message">
+                <strong>✨ CONGRATULATIONS! ✨</strong><br><br>
+                You've discovered the legendary <span class="rainbow-text">One-Time Wonder Portal</span>! You're now an official member of the <strong>Secret Society of Single Visitors</strong>! 
+                <br><br>
+                <div class="secret-game floating" onclick="partyTime()">
+                    🎪 <strong>Click here for a surprise!</strong> 🎪
+                </div>
+                <br>
+                <div class="fun-fact">
+                    🎭 <strong>Your Secret Mission:</strong> You must remember every detail of this page because once you leave, it becomes a myth, a legend, a story that others won't believe!
+                </div>
+                <br>
+                🌟 Fun facts about you, mysterious visitor:<br>
+                • You're brave enough to click mysterious links<br>
+                • You've just joined an exclusive club of 0.001% of internet users<br>
+                • You now possess forbidden knowledge<br>
+                • Your curiosity level: MAXIMUM 📊<br>
+                <br>
+                🏆 <strong>Achievement Unlocked:</strong> "Unicorn Finder" - You've found something truly unique on the internet!
+            </div>
+            <div class="countdown" id="countdown">
+                🎯 This magical moment expires when you refresh or leave...
+            </div>
+        </div>
+
+        <div class="blocked-content" id="blockedContent">
+            <div class="emoji">🎭</div>
+            <h2 class="access-denied glitch rainbow-text">Portal Vanished!</h2>
+            <div class="blocked-message">
+                <strong>🌟 The Magic Has Spoken! 🌟</strong><br><br>
+                Ah, a returning adventurer! The mystical portal remembers your digital essence and has transformed into something entirely different!
+                <br><br>
+                You once witnessed something <em>extraordinary</em>, didn't you? The secret message that can never be seen again... It now exists only in the realm of your memories! 
+                <br><br>
+                🎪 <strong>Welcome to the Hall of Legends!</strong><br>
+                You are forever marked as one of the brave souls who discovered the impossible webpage. Your legend will be whispered in the digital winds!
+                <br><br>
+                <div class="secret-game floating" onclick="consolePrize()">
+                    🎁 <strong>Legendary Visitor's Consolation Prize!</strong> 🎁<br>
+                    <small>(Click to claim your secret badge!)</small>
+                </div>
+                <br>
+                💫 <strong>Remember:</strong> You experienced something that millions never will - a truly unique moment on the internet. That makes you pretty special! 
+                <br><br>
+                🌈 Keep exploring, keep being curious, and maybe you'll find other magical corners of the web!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate device fingerprint
+        function generateFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Device fingerprint', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                !!window.sessionStorage,
+                !!window.localStorage,
+                navigator.cookieEnabled,
+                navigator.doNotTrack,
+                canvas.toDataURL()
+            ].join('|');
+            
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        // Create twinkling stars background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Fun party mode function
+        function partyTime() {
+            const container = document.querySelector('.container');
+            container.classList.add('party-mode');
+            
+            // Create confetti effect - adjust count for mobile
+            const confettiCount = window.innerWidth < 768 ? 10 : 20;
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.innerText = ['🎉', '🎊', '✨', '🌟', '🎈'][Math.floor(Math.random() * 5)];
+                confetti.style.position = 'absolute';
+                confetti.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+                confetti.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+                confetti.style.fontSize = window.innerWidth < 768 ? '1.5rem' : '2rem';
+                confetti.style.animation = 'fadeOut 2s ease-out forwards';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.zIndex = '9999';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 2000);
+            }
+            
+            // Show special message
+            setTimeout(() => {
+                alert('🎊 PARTY MODE ACTIVATED! 🎊\nYou just made this page 1000% more awesome!');
+                container.classList.remove('party-mode');
+            }, 500);
+        }
+
+        // Console prize for return visitors
+        function consolePrize() {
+            console.log(`
+🏆 LEGENDARY VISITOR BADGE UNLOCKED! 🏆
+═══════════════════════════════════════
+   
+    You are officially recognized as a
+    MASTER OF DIGITAL EXPLORATION!
+    
+    Badge ID: LEGEND-${Math.random().toString(36).substr(2, 9).toUpperCase()}
+    Rank: Mythical Internet Explorer
+    Special Ability: Finds the Impossible
+    
+    ✨ Congratulations, you magnificent human! ✨
+    
+═══════════════════════════════════════
+            `);
+            
+            alert('🎁 Your secret badge has been delivered to the browser console!\n\nPress F12 and check the Console tab to see your legendary status!');
+            
+            // Add some fun animations
+            const container = document.querySelector('.container');
+            container.style.animation = 'rainbow 2s ease-in-out, partyBounce 0.5s ease-in-out 3';
+        }
+
+        // Main logic
+        function checkAccess() {
+            const fingerprint = generateFingerprint();
+            const visitedKey = 'portal_visited_' + fingerprint;
+            
+            // Create a simple storage using a global variable and URL fragment
+            let hasVisited = false;
+            
+            // Check if fingerprint exists in current session or URL
+            if (window.location.hash.includes(fingerprint) || 
+                document.cookie.includes(visitedKey) ||
+                window.name.includes(visitedKey)) {
+                hasVisited = true;
+            }
+            
+            if (!hasVisited) {
+                // First visit - show secret content
+                document.getElementById('secretContent').classList.add('show');
+                
+                // Mark as visited using multiple methods
+                window.location.hash = '#visited_' + fingerprint;
+                document.cookie = visitedKey + '=true; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/';
+                window.name = visitedKey;
+                
+                // Also try to persist in a more creative way
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({visited: fingerprint}, '', window.location.pathname + '?fp=' + fingerprint);
+                }
+            } else {
+                // Return visit - show blocked content
+                document.getElementById('blockedContent').classList.add('show');
+            }
+        }
+
+        // Initialize
+        createStars();
+        checkAccess();
+
+        // Prevent some common refresh/reload attempts
+        window.addEventListener('beforeunload', function(e) {
+            // This won't prevent reload but gives a warning in some browsers
+            e.returnValue = 'Are you sure you want to leave? You can never come back!';
+        });
+
+        // Add some fun CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0px) scale(1); }
+                to { opacity: 0; transform: translateY(-100px) scale(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add some easter eggs
+        let konami = [];
+        const konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65]; // up up down down left right left right b a
+        let clickCount = 0;
+
+        document.addEventListener('keydown', function(e) {
+            konami.push(e.keyCode);
+            if (konami.length > konamiCode.length) {
+                konami.shift();
+            }
+            if (konami.join(',') === konamiCode.join(',')) {
+                alert('🎮 KONAMI CODE MASTER! 🎮\nBut even legendary cheat codes can\'t break the magic of the one-visit rule!\n\n+1000 Awesome Points! ✨');
+                konami = [];
+                // Make everything rainbow for a moment
+                document.body.style.filter = 'hue-rotate(0deg)';
+                let hue = 0;
+                const rainbowInterval = setInterval(() => {
+                    hue += 10;
+                    document.body.style.filter = `hue-rotate(${hue}deg)`;
+                    if (hue >= 360) {
+                        clearInterval(rainbowInterval);
+                        document.body.style.filter = 'none';
+                    }
+                }, 50);
+            }
+        });
+
+        // Secret click counter
+        document.addEventListener('click', function() {
+            clickCount++;
+            if (clickCount === 7) {
+                console.log('🎯 Secret Achievement: Lucky Seven Clicks! You\'re clearly having fun exploring this page!');
+            } else if (clickCount === 13) {
+                console.log('🍀 Wow! 13 clicks! You must really love this magical portal!');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loading Secret Portal...</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loader {
+            font-size: 1.2rem;
+        }
+    </style>
+    <script>
+        // Immediately redirect to the main page.
+        // Using replace() so the back button doesn't lead to this blank page.
+        window.location.replace('onlyonce.html');
+    </script>
+</head>
+<body>
+    <p class="loader">Initializing secret portal...</p>
+</body>
+</html>
