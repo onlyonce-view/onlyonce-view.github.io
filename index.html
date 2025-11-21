@@ -2,29 +2,529 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Loading Secret Portal...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGNAL_DETECTED // 492-X</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #00f3ff;
+            --secondary: #bc13fe;
+            --bg: #050505;
+            --grid: rgba(0, 243, 255, 0.1);
+            --scanline: rgba(0, 0, 0, 0.5);
+            --denied: #ff2a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair; /* Alien targeting cursor */
+        }
+
         body {
-            font-family: 'Courier New', monospace;
-            background: #1a1a2e;
-            color: #e0e0e0;
+            background-color: var(--bg);
+            color: var(--primary);
+            font-family: 'Share Tech Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
+            perspective: 1000px;
+        }
+
+        /* --- VISUAL EFFECTS --- */
+        
+        /* Background Canvas */
+        #neural-net {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* CRT Scanlines Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
             height: 100vh;
-            margin: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.2) 50%,
+                rgba(0, 0, 0, 0.2)
+            );
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            animation: scrollScan 10s linear infinite;
         }
-        .loader {
-            font-size: 1.2rem;
+
+        /* Vignette & Glow */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 60%, black 100%);
+            z-index: 9;
+            pointer-events: none;
+            box-shadow: inset 0 0 50px rgba(0, 243, 255, 0.1);
         }
+
+        /* --- UI CONTAINER --- */
+        .interface-container {
+            position: relative;
+            z-index: 5;
+            width: 90%;
+            max-width: 700px;
+            background: rgba(10, 10, 15, 0.85);
+            border: 1px solid var(--primary);
+            padding: 2rem;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+            backdrop-filter: blur(5px);
+            transform-style: preserve-3d;
+            transition: all 0.5s ease;
+        }
+
+        .interface-container::before {
+            /* Top decorative bar */
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanBar 2s infinite linear;
+        }
+
+        /* --- TEXT STYLES --- */
+        h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px var(--primary);
+            letter-spacing: 2px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #bdeeff;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: rgba(0, 243, 255, 0.7);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 0.5rem 0;
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- STATES (Hidden/Shown) --- */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading Bar */
+        .loader-box {
+            width: 100%;
+            height: 20px;
+            border: 1px solid var(--primary);
+            margin-top: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            box-shadow: 0 0 15px var(--primary);
+            transition: width 0.1s linear;
+        }
+
+        /* Glitch Text Effect */
+        .glitch {
+            position: relative;
+            color: var(--primary);
+        }
+        
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        /* --- ACCESS DENIED STATE --- */
+        .denied-state {
+            border-color: var(--denied);
+            box-shadow: 0 0 30px rgba(255, 42, 42, 0.2);
+        }
+        
+        .denied-state h1 {
+            color: var(--denied);
+            text-shadow: 0 0 10px var(--denied);
+        }
+        
+        .denied-state .loader-bar {
+            background: var(--denied);
+            box-shadow: 0 0 15px var(--denied);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes scanBar {
+            0% { width: 0%; left: 0; opacity: 0; }
+            50% { width: 100%; left: 0; opacity: 1; }
+            100% { width: 0%; left: 100%; opacity: 0; }
+        }
+
+        @keyframes scrollScan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(35px, 9999px, 11px, 0); }
+            20% { clip: rect(68px, 9999px, 96px, 0); }
+            40% { clip: rect(11px, 9999px, 79px, 0); }
+            60% { clip: rect(84px, 9999px, 22px, 0); }
+            80% { clip: rect(56px, 9999px, 44px, 0); }
+            100% { clip: rect(6px, 9999px, 86px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 99px, 0); }
+            20% { clip: rect(7px, 9999px, 16px, 0); }
+            40% { clip: rect(30px, 9999px, 3px, 0); }
+            60% { clip: rect(94px, 9999px, 69px, 0); }
+            80% { clip: rect(2px, 9999px, 6px, 0); }
+            100% { clip: rect(83px, 9999px, 24px, 0); }
+        }
+
+        /* Typing Cursor */
+        .cursor-blink {
+            display: inline-block;
+            width: 10px;
+            height: 1rem;
+            background: var(--primary);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
     </style>
-    <script>
-        // Immediately redirect to the main page.
-        // Using replace() so the back button doesn't lead to this blank page.
-        window.location.replace('onlyonce.html');
-    </script>
 </head>
 <body>
-    <p class="loader">Initializing secret portal...</p>
+
+    <!-- Background FX -->
+    <canvas id="neural-net"></canvas>
+    <div class="scanlines"></div>
+    <div class="overlay"></div>
+
+    <!-- Main Interface -->
+    <div class="interface-container" id="main-interface">
+        
+        <!-- Phase 1: Scanning -->
+        <div id="phase-scan">
+            <div class="data-row">
+                <span>BIO_SIGNATURE</span>
+                <span id="bio-hash">ANALYZING...</span>
+            </div>
+            <div class="data-row">
+                <span>GEOLOCATION_NODE</span>
+                <span id="geo-node">TRIANGULATING</span>
+            </div>
+            <div class="data-row">
+                <span>TEMPORAL_STATUS</span>
+                <span>SYNCING...</span>
+            </div>
+            <br>
+            <h1 class="glitch" data-text="INITIALIZING_HANDSHAKE">INITIALIZING_HANDSHAKE</h1>
+            <p>Estabilishing secure neural link. Please do not blink.</p>
+            <div class="loader-box">
+                <div class="loader-bar" id="scan-progress"></div>
+            </div>
+            <div id="console-output" style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px; height: 60px; overflow: hidden; font-family: monospace;"></div>
+        </div>
+
+        <!-- Phase 2: Access Granted (The Secret) -->
+        <div id="phase-granted" class="hidden">
+            <div class="data-row">
+                <span>CONNECTION</span>
+                <span style="color: #0f0;">SECURE [100%]</span>
+            </div>
+            <br>
+            <h1 class="glitch" data-text="ARTIFACT_DECRYPTED">ARTIFACT_DECRYPTED</h1>
+            <p>Welcome, Traveler. The system recognizes your signature.</p>
+            
+            <div style="border: 1px dashed var(--primary); padding: 1.5rem; background: rgba(0, 243, 255, 0.05);">
+                <p style="margin-bottom: 0.5rem; color: #fff;"><strong>// TRANSMISSION BEGINS</strong></p>
+                <p id="secret-message">
+                    "You have found the singularity. This moment exists only now. Once you leave this frequency, the bridge collapses."
+                    <br><br>
+                    <span style="font-size: 0.9em; color: var(--secondary);">
+                    The key you seek is: <strong style="color: #fff; text-decoration: underline;">AEON-77-KRONOS</strong>
+                    </span>
+                </p>
+                <p style="margin-bottom: 0; color: #fff;"><strong>// TRANSMISSION ENDS</strong></p>
+            </div>
+
+            <br>
+            <p style="font-size: 0.8rem; text-align: center;">
+                WARNING: REFRESHING OR CLOSING THIS TERMINAL WILL PERMANENTLY SEVER THE LINK.
+            </p>
+        </div>
+
+        <!-- Phase 3: Access Denied -->
+        <div id="phase-denied" class="hidden">
+            <div class="data-row">
+                <span style="color: var(--denied);">CONNECTION</span>
+                <span style="color: var(--denied);">SEVERED</span>
+            </div>
+            <br>
+            <h1 class="glitch" data-text="TEMPORAL_PARADOX" style="color: var(--denied); text-shadow: 2px 2px 0px red;">TEMPORAL_PARADOX</h1>
+            <p style="color: #ff8888;">
+                Error: Bio-signature duplicate detected. 
+            </p>
+            <p>
+                The timeline has already been observed. You cannot step into the same river twice. The artifact has shifted phases.
+            </p>
+            <div style="margin-top: 2rem; text-align: center; opacity: 0.5;">
+                <span style="font-size: 3rem;">🔒</span>
+                <br>
+                TERMINAL LOCKED
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function() { // Start IIFE to prevent global namespace pollution
+        
+        /* ALIEN TECHNOLOGY CORE LOGIC 
+           ---------------------------
+           1. Generate unique "Bio-Hash" based on browser data.
+           2. check LocalStorage for this hash.
+           3. If found -> LOCKOUT.
+           4. If not found -> DECRYPT & SAVE.
+        */
+
+        const ELEMENTS = {
+            container: document.getElementById('main-interface'),
+            scan: document.getElementById('phase-scan'),
+            granted: document.getElementById('phase-granted'),
+            denied: document.getElementById('phase-denied'),
+            bar: document.getElementById('scan-progress'),
+            console: document.getElementById('console-output'),
+            hashDisplay: document.getElementById('bio-hash'),
+            geoDisplay: document.getElementById('geo-node')
+        };
+
+        // 1. Generate a Pseudo-Unique Fingerprint (The Bio-Hash)
+        function generateBioHash() {
+            const data = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width,
+                screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset()
+            ].join('');
+            
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < data.length; i++) {
+                const char = data.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; 
+            }
+            return 'UID-' + Math.abs(hash).toString(16).toUpperCase();
+        }
+
+        const USER_HASH = generateBioHash();
+        const STORAGE_KEY = 'ALIEN_CONTACT_' + USER_HASH;
+
+        // 2. Typewriter effect for console
+        function log(text) {
+            const line = document.createElement('div');
+            line.textContent = `> ${text}`;
+            ELEMENTS.console.appendChild(line);
+            ELEMENTS.console.scrollTop = ELEMENTS.console.scrollHeight;
+        }
+
+        // 3. The Sequence
+        async function initiateSequence() {
+            ELEMENTS.hashDisplay.innerText = USER_HASH;
+            ELEMENTS.geoDisplay.innerText = "SECTOR " + Math.floor(Math.random() * 900 + 100);
+
+            // CHECK IF VISITED
+            if (localStorage.getItem(STORAGE_KEY)) {
+                // Immediate Lockout
+                triggerLockout();
+            } else {
+                // First time access - Run Scan
+                await runScanAnimation();
+            }
+        }
+
+        function triggerLockout() {
+            ELEMENTS.scan.classList.add('hidden');
+            ELEMENTS.granted.classList.add('hidden');
+            ELEMENTS.denied.classList.remove('hidden');
+            
+            // Change CSS Variables for Red Theme
+            document.documentElement.style.setProperty('--primary', '#ff2a2a');
+            document.documentElement.style.setProperty('--secondary', '#ff0000');
+            ELEMENTS.container.classList.add('denied-state');
+        }
+
+        function runScanAnimation() {
+            return new Promise(resolve => {
+                let width = 0;
+                
+                const logs = [
+                    "Parsing biological syntax...",
+                    "Connecting to orbital relay...",
+                    "Decrypting quantum packets...",
+                    "Verifying timeline consistency...",
+                    "Handshake accepted."
+                ];
+                
+                let logIndex = 0;
+
+                const interval = setInterval(() => {
+                    width += Math.random() * 2;
+                    if (width > 100) width = 100;
+                    ELEMENTS.bar.style.width = width + '%';
+
+                    // Randomly add logs
+                    if (width > (logIndex + 1) * 20 && logIndex < logs.length) {
+                        log(logs[logIndex]);
+                        logIndex++;
+                    }
+
+                    if (width >= 100) {
+                        clearInterval(interval);
+                        setTimeout(grantAccess, 800);
+                    }
+                }, 50);
+            });
+        }
+
+        function grantAccess() {
+            ELEMENTS.scan.classList.add('hidden');
+            ELEMENTS.granted.classList.remove('hidden');
+            
+            // TYPEWRITER EFFECT FOR SECRET MESSAGE
+            const secretEl = document.getElementById('secret-message');
+            const text = secretEl.innerHTML; // Save HTML
+            // (Simple reveal for now to keep style)
+            
+            // *** THE POINT OF NO RETURN ***
+            // Save the flag. Next refresh -> Blocked.
+            localStorage.setItem(STORAGE_KEY, 'true');
+        }
+
+        // --- VISUALS: NEURAL NET CANVAS ---
+        const canvas = document.getElementById('neural-net');
+        const ctx = canvas.getContext('2d');
+        
+        let w, h, particles;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > w) this.vx *= -1;
+                if (this.y < 0 || this.y > h) this.vy *= -1;
+            }
+        }
+
+        function initParticles() {
+            resize();
+            particles = [];
+            for(let i=0; i<60; i++) particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary');
+            ctx.strokeStyle = ctx.fillStyle;
+            
+            particles.forEach((p, i) => {
+                p.update();
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Connect nearby particles
+                particles.slice(i).forEach(p2 => {
+                    const d = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (d < 150) {
+                        ctx.globalAlpha = (1 - d/150) * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1;
+                    }
+                });
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        initParticles();
+        animate();
+        
+        // START THE APP
+        initiateSequence();
+
+        })(); // End IIFE
+    </script>
 </body>
 </html>
